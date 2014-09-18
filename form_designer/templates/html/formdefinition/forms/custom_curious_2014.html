@@ -1,0 +1,185 @@
+{#{% load friendly bootstrap_toolkit i18n %}#}
+{% load i18n %}
+<style type="text/css" xmlns="http://www.w3.org/1999/html">
+
+    form[name="{{ form_definition.name|upper }}"] label { text-align:right;float:left;width: 120px;}
+    form[name="{{ form_definition.name|upper }}"] h5 { line-height: 18px; color: #525252; }
+    form[name="{{ form_definition.name|upper }}"] h6 { line-height: 18px; color: #594c4c; }
+    form[name="{{ form_definition.name|upper }}"] p.field { margin-top: 20px; }
+    form[name="{{ form_definition.name|upper }}"] p.field-2lines { min-height: 36px; margin-top: 20px;margin-bottom: 0px;}
+    form[name="{{ form_definition.name|upper }}"] p.field-2lines select { margin-left: 20px; margin-top: 10px; width: 100px; }
+    form[name="{{ form_definition.name|upper }}"] p.field-withoutlabel { margin-top: 2px;}
+    form[name="{{ form_definition.name|upper }}"] label span.small { color: #a9a9a9; font-size: 90%; text-align: right; width: 128px; }
+    form[name="{{ form_definition.name|upper }}"] span.radio { display: block;min-height: 15px;}
+    form[name="{{ form_definition.name|upper }}"] span.radio label {  width: 50px;}
+    form[name="{{ form_definition.name|upper }}"] textarea { margin-left: 20px; width: 250px; height: 80px; }
+    form[name="{{ form_definition.name|upper }}"] textarea.disabled {  height: 120px; width: 430px;}
+    form[name="{{ form_definition.name|upper }}"] p.field-withoutlabel textarea {  height: 90px; width: 400px;}
+    form[name="{{ form_definition.name|upper }}"] textarea#id_any-notes {  margin-top:10px; height: 110px; width: 400px;}
+
+    form[name="{{ form_definition.name|upper }}"] .controls { margin-left: 115px; }
+    form[name="{{ form_definition.name|upper }}"] .control-label { width: 100px; }
+    form[name="{{ form_definition.name|upper }}"] input.disabled {
+        -webkit-border-radius: 0px;
+        -moz-border-radius: 0px;
+        box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        -moz-box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        -webkit-box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        background: none;
+        color: #5c2114;
+        font-family: 'PT Sans Narrow', 'Istok Web', "Lucida Grande";
+        font-size: 20px;
+        margin: 5px 0 5px 0px;
+        padding: 0 11px;
+        width: 400px;
+        border:solid 0px #7a3f55;
+    }
+    form[name="{{ form_definition.name|upper }}"] input[type="text"] , select { margin-left: 20px; width: 250px; }
+    form[name="{{ form_definition.name|upper }}"] input[type="file"] { margin-left: 20px; }
+    form[name="{{ form_definition.name|upper }}"] input[type="submit"] { margin: 5px 0 10px 15px; }
+    form[name="{{ form_definition.name|upper }}"] input[type="checkbox"]  { margin-left: 15px; margin-top: 0; }
+    form[name="{{ form_definition.name|upper }}"] div.errorlist { margin: 4px 0; background-color: #E6E6E6; }
+    form[name="{{ form_definition.name|upper }}"] ul.errorlist { margin: 2px 0; }
+
+    form[name="{{ form_definition.name|upper }}"] ul { list-style: none; margin: 2px 0;}
+    form[name="{{ form_definition.name|upper }}"] ul li { list-style: none; }
+    form[name="{{ form_definition.name|upper }}"] ul li label { float: none; }
+    form[name="{{ form_definition.name|upper }}"] .ui-state-highlight p { margin-top: 10px; }
+    form[name="{{ form_definition.name|upper }}"] .ui-state-error p { margin-top: 10px; }
+
+    form[name="{{ form_definition.name|upper }}"] label[for="id_newsletter"] { width: 198px; margin-left: 26px; margin-top: 35px; }
+    form[name="{{ form_definition.name|upper }}"] input#id_applicationentry {
+        font-size: 17px;
+        width: 405px;
+    }
+</style>
+<hr>
+<form class="form" name="{{ form_definition.name|upper }}" action="{{ form_definition.action }}"
+      method="{{ form_definition.method }}" enctype="multipart/form-data">
+    {% for entry in logs %}
+        {% for field in entry.data %}
+            <p>
+                <label for="">{{ field.label }}</label>
+            </p>
+        {% endfor %}
+    {% endfor %}
+    {% if form_success %}
+        <div class="ui-widget">
+            <div class="ui-state-highlight ui-corner-all">
+                <p><span class="ui-icon ui-icon-check" style="float: left; margin-right: .3em;"></span>
+                    <strong>{% trans "Success" %}!</strong> {% if form_definition.success_message %}
+                        {{ form_definition.success_message }} {% else %}Data was sent correctly. Thanks for partecipating.
+                    {% endif %}</p>
+            </div>
+        </div>
+    {% endif %}
+    {% if form_error %}
+        <div class="ui-widget">
+            <div class="ui-state-error ui-corner-all">
+                <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+                    <strong>{% trans "Error " %}!</strong> {% if form_definition.error_message %}{{ form_definition.error_message }}{% else %} Error occurred. Please fill correct value.
+                    {% endif %}</p>
+            </div>
+        </div>
+    {% endif %}
+    {% comment %}{{ form|as_bootstrap }}{% endcomment %}
+    <div class="row">
+    {% for field in form %}
+        {% if forloop.counter <= 2 %}
+            {% if forloop.counter == 1 %}
+                <div class="span12"><h4 class="form_title">PARTICIPANT PERSONAL INFORMATION</h4></div>
+                <div class="span6">{% endif %}
+                {% include "html/formdefinition/forms/includes/custom_field.html" %}
+            {% if forloop.counter == 2 %}</div>{% endif %}
+
+        {% elif forloop.counter > 2 and forloop.counter <= 4 %}
+            {% if forloop.counter == 3 %}<div class="span6">{% endif %}
+                {% include "html/formdefinition/forms/includes/custom_field.html" %}
+            {% if forloop.counter == 4 %}<br></div>{% endif %}
+
+        {% elif forloop.counter > 4 and forloop.counter <= 11 %}
+            {% if forloop.counter == 5 %}
+                <div class="span12"><h4 class="form_title">CONTACT INFORMATION PARENTS OR LEGAL GUARDIAN</h4></div>
+                <div class="span6 ">
+                <h5 class="form_title">Contact person I</h5>
+            {% endif %}
+                {% include "html/formdefinition/forms/includes/custom_field.html" %}
+            {% if forloop.counter == 11 %}
+                <p><br></p>
+                </div>
+            {% endif %}
+
+        {% elif forloop.counter > 11 and forloop.counter <= 18 %}
+            {% if forloop.counter == 12 %}
+                <div class="span6 ">
+                <h5 class="form_title">Contact person II</h5>
+            {% endif %}
+                {% include "html/formdefinition/forms/includes/custom_field.html" %}
+            {% if forloop.counter == 18 %}
+                <p><br></p>
+                </div>
+            {% endif %}
+
+        {% elif forloop.counter > 18 and forloop.counter <= 23 %}
+            {% if forloop.counter == 19 %}
+                <div class="span12"><h4 class="form_title">HEALTH INFORMATION</h4></div>
+                <div class="span6 ">
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+
+            {% elif forloop.counter == 20 %}
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+            {% elif forloop.counter == 21 %}
+                {% include "html/formdefinition/forms/includes/custom_field_without_label.html" %}
+            {% elif forloop.counter == 22 %}
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+            {% elif forloop.counter == 23 %}
+                {% include "html/formdefinition/forms/includes/custom_field_without_label.html" %}
+                </div>
+            {% endif %}
+
+        {% elif forloop.counter > 23 and forloop.counter <= 28 %}
+            {% if forloop.counter == 24 %}
+                <div class="span6 ">
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+
+            {% elif forloop.counter == 25 %}
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+            {% elif forloop.counter == 26 %}
+                {% include "html/formdefinition/forms/includes/custom_field_without_label.html" %}
+            {% elif forloop.counter == 27 %}
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+            {% elif forloop.counter == 28 %}
+                {% include "html/formdefinition/forms/includes/custom_field_without_label.html" %}
+                </div>
+            {% endif %}
+        {% elif forloop.counter > 28 and forloop.counter <= 31 %}
+            {% if forloop.counter == 29 %}
+                <div class="span6 ">
+                {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+                </div>
+            {% elif forloop.counter == 30 %}
+                <div class="span6 ">
+                    {% include "html/formdefinition/forms/includes/custom_field_2_lines.html" %}
+            {% elif forloop.counter == 31 %}
+                    <br>
+                    <h6 style="margin: 4px 10px"> Terms and Conditions<a href="/media/cms_page_media/20/Termsandconditions_curious_camp_2014.pdf"> PDF Here</a></h6>
+                    {% include "html/formdefinition/forms/includes/custom_field_1_line.html" %}
+                    <input class="btn btn-large btn-info" type="submit" value="{% if form_definition.submit_label %}{{ form_definition.submit_label }}{% else %}{% trans "Submit" %}{% endif %}" />
+            {% endif %}
+        {% endif %}
+     {% endfor %}
+    </div>
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+    {% csrf_token %}
+</form>
+<script type="text/javascript">
+
+    $( document ).ready(function() {
+        var formplus = $("form[name='{{ form_definition.name|upper }}'] div.ui-widget").clone().get(0);
+        var par = $("div.container.content").get(0);
+        par.insertBefore(formplus, par.firstChild);
+    });
+
+</script>

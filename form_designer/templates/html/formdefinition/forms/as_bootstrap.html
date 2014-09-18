@@ -1,0 +1,122 @@
+{#{% load friendly bootstrap_toolkit i18n %}#}
+{% load i18n %}
+<style type="text/css" xmlns="http://www.w3.org/1999/html">
+{#    form[name="SPACE-EXPO-2013"] textarea { width:300; height: 200px; }#}
+    form[name="SPACE-EXPO-2013"] div.errorlist { margin: 4px 0; background-color: #E6E6E6; }
+    form[name="SPACE-EXPO-2013"] ul.errorlist { margin: 2px 0; }
+    form[name="SPACE-EXPO-2013"] p { margin-top: 20px; }
+    form[name="SPACE-EXPO-2013"] label span.small { color: #a9a9a9;
+        font-size: 90%;
+        text-align: right;
+        width: 128px;
+
+    }
+    form[name="SPACE-EXPO-2013"] .controls { margin-left: 115px; }
+    form[name="SPACE-EXPO-2013"] .control-label { width: 100px; }
+    form[name="SPACE-EXPO-2013"] input[type="text"] , select { margin-left: 20px; width: 230px; }
+    form[name="SPACE-EXPO-2013"] input[type="submit"] { margin: 20px 0px 10px 170px; }
+    form[name="SPACE-EXPO-2013"] input[type="checkbox"]  { margin-left: 15px; margin-top: 35px; }
+    form[name="SPACE-EXPO-2013"] label[for="id_newsletter"] { width: 198px; margin-left: 26px; margin-top: 35px; }
+    form[name="{{ form_definition.name|upper }}"] .ui-state-error p { margin-top: 10px; }
+    form[name="{{ form_definition.name|upper }}"] .ui-state-highlight p { margin-top: 10px; }
+    form[name="SPACE-EXPO-2013"] label { text-align:right;float:left;width: 120px;}
+    form[name="SPACE-EXPO-2013"] input.disabled {
+        -webkit-border-radius: 0px;
+        -moz-border-radius: 0px;
+        box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        -moz-box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        -webkit-box-shadow: rgba(0,0,0, 0.1) 0px 0px 0px;
+        background: none;
+        color: #5c2114;
+        font-family: 'PT Sans Narrow', 'Istok Web', "Lucida Grande";
+        font-size: 20px;
+        margin: 15px 0 20px 0px;
+        padding: 0 11px;
+        width: 391px;
+        border:solid 0px #7a3f55;
+    }
+</style>
+<hr>
+<form class="form" name="{{ form_definition.name|upper }}" action="{{ form_definition.action }}"
+      method="{{ form_definition.method }}" enctype="multipart/form-data">
+        {% for entry in logs %}
+            {% for field in entry.data %}
+            <p>
+                <label for="">{{ field.label }}</label>
+{#                {{ field.value|friendly }}#}
+            </p>
+            {% endfor %}
+        {% endfor %}
+        {% if form_success %}
+            <div class="ui-widget">
+                <div class="ui-state-highlight ui-corner-all">
+                    <p><span class="ui-icon ui-icon-check" style="float: left; margin-right: .3em;"></span>
+                        <strong>{% trans "Succes" %}!</strong> {% if form_definition.success_message %}
+                            {{ form_definition.success_message }} {% else %}Data was sent correctly. Thanks for partecipating.
+                        {% endif %}.</p>
+                </div>
+            </div>
+{#            <div class="alert alert-success">#}
+{#                <a class="close" data-dismiss="alert">×</a>#}
+{#                <strong>{% trans "succes" %}!</strong>#}
+{#                {% if form_definition.success_message %}#}
+{#                    {{ form_definition.success_message }} {% else %}Data was sent correctly. Thanks for partecipating.#}
+{#                {% endif %}#}
+{#            </div>#}
+        {% endif %}
+        {% if form_error %}
+            <div class="ui-widget">
+                <div class="ui-state-error ui-corner-all">
+                    <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+                    <strong>{% trans "Error " %}!</strong> {% if form_definition.error_message %}{{ form_definition.error_message }}{% else %} Error occurred. Please fill correct value.
+                    {% endif %}.</p>
+                </div>
+            </div>
+{#            <div class="alert alert-error ">#}
+{#                <a class="close" data-dismiss="alert">×</a>#}
+{#                <strong>{% trans "error" %}!</strong>#}
+{#                    {% if form_definition.error_message %}#}
+{#                        {{ form_definition.error_message }}#}
+{#                    {% else %} Error occurred. Please fill correct value.#}
+{#                    {% endif %}#}
+{#            </div>#}
+        {% endif %}
+{% comment %}{{ form|as_bootstrap }}{% endcomment %}
+
+
+        <div class="span6 pull-left">
+            {% for field in form %}
+                {% if forloop.counter <= 10 %}
+                    {% if not field.is_hidden %}
+                        {% if field.errors %}<div class="errorlist ui-state-default ui-corner-all">{{ field.errors }}</div>{% endif %}
+                        <p class="field {% if field.errors %}errors{% endif %}{% if field.field.required %}{% if field.errors %}{% endif %}required{% endif %}">
+                            <label for="{{ field.auto_id }}">{{ field.label }}<br/><span class="small">{{ field.help_text }}</span></label>
+                            {{ field }}
+                        </p>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="span6 pull-right">
+            {% for field in form %}
+                {% if forloop.counter > 10 %}
+                    {% if not field.is_hidden %}
+                        {% if field.errors %}<div class="errorlist ui-state-default ui-corner-all">{{ field.errors }}</div>{% endif %}
+                        <p class="field {% if field.errors %}errors{% endif %}{% if field.field.required %}required{% endif %}">
+                            <label for="{{ field.auto_id }}">{{ field.label }}<br/><span class="small">{{ field.help_text }}</span></label>
+                            {{ field }}
+                        </p>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    <div>
+        <div class="form-actions">
+            <input class="btn btn-large btn-info" type="submit" value="{% if form_definition.submit_label %}{{ form_definition.submit_label }}{% else %}{% trans "Submit" %}{% endif %}" />
+        </div>
+    </div>
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+    {% csrf_token %}
+</form>

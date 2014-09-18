@@ -1,0 +1,84 @@
+{#{% create your own custom.html to override this template %}#}
+<style type="text/css"></style>
+{% load l10n %}
+{% load friendly i18n %}
+{% load fieldsets %}
+{% localize on %}{% endlocalize %}
+
+<div id="stylized" class="{{ form_definition.name|lower }}">
+    {% if form_success %}
+        <p class="succes-form">
+            {% if form_definition.success_message %}
+                {{ form_definition.success_message }}
+            {% else %}Data was sent correctly. Thanks for partecipating to Sterren Camps
+            {% endif %}
+        </p>
+    {% endif %}
+    {% if form_error %}
+        <p class="error-form">
+            {% if form_definition.error_message %}
+                {{ form_definition.error_message }}
+            {% else %}Data was sent correctly. Thanks for partecipating to Sterren Camps
+            {% endif %}
+        </p>
+    {% endif %}
+    {% with formblock=form  %}
+
+        <form name="{{ form_definition.name }}"  action="{{ form_definition.action }}" method="{{ form_definition.method }}" enctype="multipart/form-data">
+
+            {% for entry in logs %}
+                {% for field in entry.data %}
+                    <p>
+                        <label for="">{{ field.label }}</label>
+                        {{ field.value|friendly }}
+                    </p>
+                {% endfor %}
+            {% endfor %}
+            <div class="left">
+                {% for field in form %}{% comment %}{% for field in form %}{% endcomment %}
+                    {% if forloop.counter <= 11 %}
+
+                        {% if not field.is_hidden %}
+                            {{ field.errors }}
+                            <p class="field {% if field.errors %}errors{% endif %}
+                                {% if field.field.required %}{% if field.errors %}{% endif %}required{% endif %}
+                                {% if forloop.counter <= 10 %}{% else %}{% endif %}">
+                                <label for="{{ field.auto_id }}">{{ field.label }} {% if field.field.required %}*{% else %}&nbsp;{% endif %}</label>
+                                {{ field }}
+                                <span class="small">{{ field.help_text }}</span>
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="right">
+                {% for field in form %}{% comment %}{% for field in form %}{% endcomment %}
+                    {% if forloop.counter > 11 %}
+
+                        {% if not field.is_hidden %}
+                            {{ field.errors }}
+                            <p class="field {% if field.errors %}errors{% endif %}
+                                {% if field.field.required %}{% if field.errors %}{% endif %}required{% endif %}
+                                {% if forloop.counter <= 10 %}{% else %}{% endif %}">
+                                <label for="{{ field.auto_id }}">{{ field.label }} {% if field.field.required %}*{% else %}&nbsp;{% endif %}</label>
+                                {{ field }}
+                                <span class="small">{{ field.help_text }}</span>
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <p class="buttons right">
+                <button type="submit" value="{% if form_definition.submit_label %}
+            {{ form_definition.submit_label }}{% else %}{% trans "Submit" %}{% endif %}" >
+                    {% if form_definition.submit_label %}
+                        {{ form_definition.submit_label }}{% else %}{% trans "Sign-Up" %}{% endif %}
+                </button>
+            </p>
+            {% for field in form.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            {% csrf_token %}
+        </form>
+    {% endwith %}
+</div>

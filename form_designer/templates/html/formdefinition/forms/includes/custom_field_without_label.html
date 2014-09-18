@@ -1,0 +1,6 @@
+{% if not field.is_hidden %}
+{% if field.errors %}<div class="errorlist ui-state-default ui-corner-all">{{ field.errors }}</div>{% endif %}
+<p class="field-withoutlabel{% if field.errors %}errors{% endif %}{% if field.field.required %}{% if field.errors %}{% endif %}required{% endif %}">
+    {{ field }}
+</p>
+{% endif %}

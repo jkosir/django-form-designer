@@ -1,0 +1,10 @@
+{% if not field.is_hidden %}
+{% if field.errors %}<div class="errorlist ui-state-default ui-corner-all">{{ field.errors }}</div>{% endif %}
+<p class="field-2lines {% if field.errors %}errors{% endif %}{% if field.field.required %}{% if field.errors %}{% endif %}required{% endif %}">
+    <label style="float: none" class="no_float" for="{{ field.auto_id }}">{{ field.label }}
+        <br/>
+        <span class="small">{{ field.help_text }}</span>
+    </label>
+    {{ field }}
+</p>
+{% endif %}
