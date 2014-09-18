@@ -1,3 +1,4 @@
-{% load friendly %}{% for item in data %}{% if item.label %}{{ item.label }}{% else %}{{ item.name }}{% endif %}: {{ item.value|friendly|safe }}
-
+{% load friendly %}
+{% for item in data %}{% if item.label %}
+{{ item.label }}{% else %}{{ item.name }}{% endif %}: {{ item.value|friendly|safe }}
 {% endfor %}

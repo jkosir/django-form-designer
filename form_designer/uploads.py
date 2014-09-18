@@ -1,6 +1,5 @@
 from form_designer import settings as app_settings
 from django.core.files.base import File
-from django.forms.forms import NON_FIELD_ERRORS
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.fields.files import FieldFile
 from django.template.defaultfilters import filesizeformat
@@ -13,7 +12,6 @@ def get_storage():
 
 
 def clean_files(form):
-    total_upload_size = 0
     for field in form.file_fields:
         uploaded_file = form.cleaned_data.get(field.name, None)
         msg = None
@@ -22,26 +20,15 @@ def clean_files(form):
                 msg = _('This field is required.')
             else:
                 continue
-        else:
-            total_upload_size += uploaded_file._size
-            if not os.path.splitext(uploaded_file.name)[1].lstrip('.').lower() in  \
-                app_settings.ALLOWED_FILE_TYPES:
-                    msg = _('This file type is not allowed.')
-            elif uploaded_file._size > app_settings.MAX_UPLOAD_SIZE:
-                msg = _('Please keep file size under %(max_size)s. Current size is %(size)s.') %  \
-                    {'max_size': filesizeformat(app_settings.MAX_UPLOAD_SIZE),
-                    'size': filesizeformat(uploaded_file._size)}
+        elif not os.path.splitext(uploaded_file.name)[1].lstrip('.').lower() in  \
+            app_settings.ALLOWED_FILE_TYPES:
+                msg = _('This file type is not allowed.')
+        elif uploaded_file._size > app_settings.MAX_UPLOAD_SIZE:
+            msg = _('Please keep file size under %(max_size)s. Current size is %(size)s.') %  \
+                {'max_size': filesizeformat(app_settings.MAX_UPLOAD_SIZE), 
+                'size': filesizeformat(uploaded_file._size)}
         if msg:
             form._errors[field.name] = form.error_class([msg])
-
-    if total_upload_size > app_settings.MAX_UPLOAD_TOTAL_SIZE:
-        msg = _('Please keep total file size under %(max)s. Current total size is %(current)s.') %  \
-            {"max": filesizeformat(app_settings.MAX_UPLOAD_TOTAL_SIZE), "current": filesizeformat(total_upload_size)}
-
-        if NON_FIELD_ERRORS in form._errors:
-            form._errors[NON_FIELD_ERRORS].append(msg)
-        else:
-            form._errors[NON_FIELD_ERRORS] = form.error_class([msg])
 
     return form.cleaned_data
     
@@ -57,10 +44,17 @@ def handle_uploaded_files(form_definition, form):
                 continue
             valid_file_name = storage.get_valid_name(uploaded_file.name)
             root, ext = os.path.splitext(valid_file_name)
-            filename = storage.get_available_name(
-                os.path.join(app_settings.FILE_STORAGE_DIR, 
-                form_definition.name, 
-                '%s_%s%s' % (root, secret_hash, ext)))
+            if form_definition.name == 'SRT_2014':
+                form_data = form.data['nome_bambino'] + '_' + form.data['cognome_bambino']
+                filename = storage.get_available_name(
+                    os.path.join(app_settings.FILE_STORAGE_DIR,
+                    form_definition.name,
+                    '%s_%s_%s%s' % (form_data, root, secret_hash, ext)))
+            else:
+                filename = storage.get_available_name(
+                    os.path.join(app_settings.FILE_STORAGE_DIR,
+                    form_definition.name,
+                    '%s_%s%s' % (root, secret_hash, ext)))
             storage.save(filename, uploaded_file)
             form.cleaned_data[field.name] = StoredUploadedFile(filename)
             files.append(storage.path(filename))

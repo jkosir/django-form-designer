@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _, ugettext
 from django.conf.urls import patterns, url
 from django.contrib.admin.views.main import ChangeList
@@ -15,12 +16,12 @@ class FormDefinitionFieldInline(admin.StackedInline):
     model = FormDefinitionField
     extra = 1
     fieldsets = [
-        (_('Basic'), {'fields': ['name', 'field_class', 'required', 'initial']}),
-        (_('Display'), {'fields': ['label', 'widget', 'help_text', 'position', 'include_result']}),
+        (_('Basic'), {'fields': [('name', 'label'), ('field_class', 'widget'), ('required', 'include_result',),
+                                  'initial']}),#'localized'
+        (_('Display'), {'fields': ['help_text',('choice_values', 'choice_labels'), 'position',]}),
         (_('Text'), {'fields': ['max_length', 'min_length']}),
         (_('Numbers'), {'fields': ['max_value', 'min_value', 'max_digits', 'decimal_places']}),
         (_('Regex'), {'fields': ['regex']}),
-        (_('Choices'), {'fields': ['choice_values', 'choice_labels']}),
         (_('Model Choices'), {'fields': ['choice_model', 'choice_model_empty_label']}),
     ]
 
@@ -29,22 +30,41 @@ class FormDefinitionAdmin(admin.ModelAdmin):
     fieldsets = [
         (_('Basic'), {'fields': ['name', 'require_hash', 'method', 'action', 'title', 'body']}),
         (_('Settings'), {'fields': ['allow_get_initial', 'log_data', 'success_redirect', 'success_clear', 'display_logged', 'save_uploaded_files'], 'classes': ['collapse']}),
-        (_('Mail form'), {'fields': ['mail_to', 'mail_from', 'mail_subject', 'mail_uploaded_files'], 'classes': ['collapse']}),
+        (_('Mail form'), {'fields': ['mail_to', 'mail_from', 'mail_subject', 'mail_uploaded_files','mail_report_files'], 'classes': ['collapse']}),
+        (_('Mail replay'), {'fields': ['mail_replay','replay_mail_to', 'replay_subject','replay_body' ]
+                                      + [('replay_attachments0','replay_attachments1','replay_attachments_field')], 'classes': ['collapse']}),
         (_('Templates'), {'fields': ['message_template', 'form_template_name'], 'classes': ['collapse']}),
         (_('Messages'), {'fields': ['success_message', 'error_message', 'submit_label'], 'classes': ['collapse']}),
+        (_('Model related'), {'fields': ['log_data_to_model', 'model_class_name', ], 'classes': ['collapse']}),
     ]
     list_display = ('name', 'title', 'method', 'count_fields')
     form = FormDefinitionForm
     inlines = [
         FormDefinitionFieldInline,
     ]
+    save_as = True
+    save_on_top = True
+    actions = ['make_duplicate']
+
+    def make_duplicate(self, request, queryset):
+        from utils import duplicate
+        for i , obj in enumerate(queryset):
+            obj.name = slugify(obj.title + u'copy' + str(i))
+            duplicate(obj)
+        if queryset.count() == 1:
+            message_bit = "1 form was"
+        else:
+            message_bit = "%s form were" % queryset.count()
+        self.message_user(request, "%s successfully marked as published." % message_bit)
+    make_duplicate.short_description = "Duplicate selected"
+
 
 
 class FormLogAdmin(admin.ModelAdmin):
-    list_display = ('form_no_link', 'created', 'id', 'created_by', 'data_html')
+    list_display = ('__unicode__','form_no_link', 'created', 'id', 'created_by', 'data_html')
     list_filter = ('form_definition',)
-    list_display_links = ()
-    date_hierarchy = 'created'
+    #list_display_links = ()
+    #actions = ['export_csv','export_xls']
 
     exporter_classes = {}
     exporter_classes_ordered = []
@@ -63,7 +83,8 @@ class FormLogAdmin(admin.ModelAdmin):
         for cls in self.get_exporter_classes():
             desc = _("Export selected %%(verbose_name_plural)s as %s") % cls.export_format()
             actions[cls.export_format()] = (cls.export_view, cls.export_format(), desc)
-            
+#        if xlwt_installed:
+#            actions.append('export_xls')
         return actions
 
     # Disabling all edit links: Hack as found at http://stackoverflow.com/questions/1618728/disable-link-to-edit-object-in-djangos-admin-display-list-only
@@ -84,20 +105,9 @@ class FormLogAdmin(admin.ModelAdmin):
     data_html.allow_tags = True
     data_html.short_description = _('Data')
 
-    def get_change_list_query_set(self, request, extra_context=None):
-        """
-        The 'change list' admin view for this model.
-        """
-        list_display = self.get_list_display(request)
-        list_display_links = self.get_list_display_links(request, list_display)
-        list_filter = self.get_list_filter(request)
-        ChangeList = self.get_changelist(request)
-
-        cl = ChangeList(request, self.model, list_display,
-            list_display_links, list_filter, self.date_hierarchy,
-            self.search_fields, self.list_select_related,
-            self.list_per_page, self.list_max_show_all, self.list_editable,
-            self)
+    def get_change_list_query_set(self, request):
+        cl = ChangeList(request, self.model, self.list_display, self.list_display_links, self.list_filter,
+            self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_editable, self.admin_site, self)
         return cl.get_query_set(request)
 
     def export_view(self, request, format):
@@ -124,5 +134,37 @@ class FormLogAdmin(admin.ModelAdmin):
         return super(FormLogAdmin, self).changelist_view(request, extra_context)
 
 
+
+class FormDefinitionFieldInlineTabular(admin.TabularInline):
+    form = FormDefinitionFieldInlineForm
+    model = FormDefinitionField
+    extra = 1
+    fields = ['name', 'field_class', 'widget', 'label','help_text','position','required','include_result','localized' ]
+#        (_('Text'), {'fields': ['max_length', 'min_length'],  'classes': ('collapse',) }),
+#        (_('Numbers'), {'fields': ['max_value', 'min_value', 'max_digits', 'decimal_places'], 'classes': ('collapse',) }),
+#        (_('Regex'), {'fields': ['regex'], 'classes': ('collapse',) }),
+#        (_('Choices'), {'fields': ['choice_values', 'choice_labels'], 'classes': ('collapse',) }),
+#        (_('Model Choices'), {'fields': ['choice_model', 'choice_model_empty_label'], 'classes': ('collapse',) }),aa
+
+from admin_manager.buttons_admin.button_admin import ButtonAdmin
+
+class FormDefinitionAdminTab(ButtonAdmin,FormDefinitionAdmin):
+    inlines = [
+        FormDefinitionFieldInlineTabular,
+        ]
+    def linkselfview(self,obj):
+        print "Call" #obj.sendmail()
+    linkselfview.short_description = "aaasaa"
+    #    #link_self_view.allow_tags = True
+    #
+    buttons = ['linkselfview',]
+
+class FormDefinitionProxy(FormDefinition):
+    class Meta:
+        proxy = True
+        verbose_name = 'Form Tab'
+        verbose_name_plural = 'Forms Tab'
+
 admin.site.register(FormDefinition, FormDefinitionAdmin)
+admin.site.register(FormDefinitionProxy, FormDefinitionAdminTab)
 admin.site.register(FormLog, FormLogAdmin)

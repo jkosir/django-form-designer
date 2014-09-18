@@ -1,8 +1,5 @@
 from django.db import models
 from django import forms
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
-
 
 class ModelNameFormField(forms.CharField):
 
@@ -23,11 +20,7 @@ class ModelNameFormField(forms.CharField):
         if value == u'':
             return value
         if not ModelNameFormField.get_model_from_string(value):
-            raise ValidationError(
-                _('Model could not be imported: %(value)s. Please use a valid model path.'),
-                    code='invalid',
-                    params={'value': value},
-                )
+            raise forms.ValidationError(self.error_messages['invalid'])
         return value
 
 class ModelNameField(models.CharField):
@@ -54,7 +47,7 @@ class TemplateFormField(forms.CharField):
         try:
             Template(value)
         except TemplateSyntaxError, error:
-            raise ValidationError(error)
+            raise forms.ValidationError(error)
         return value
 
 class TemplateCharField(models.CharField):
@@ -86,7 +79,7 @@ class RegexpExpressionFormField(forms.CharField):
         try:
             re.compile(value)
         except Exception, error:
-            raise ValidationError(error)
+            raise forms.ValidationError(error)
         return value
 
 class RegexpExpressionField(models.CharField):
@@ -97,3 +90,38 @@ class RegexpExpressionField(models.CharField):
         defaults = {'form_class': RegexpExpressionFormField}
         defaults.update(kwargs)
         return super(RegexpExpressionField, self).formfield(**defaults)
+
+class CharFieldRO(forms.CharField):
+
+    widget=forms.TextInput(attrs={'class':'disabled', 'readonly':'readonly'})
+    def clean(self, value):
+        """
+        Validates that the input matches the regular expression. Returns a
+        Unicode object.
+        """
+        value = super(CharFieldRO, self).clean(value)
+        if value == u'':
+            return value
+        return value
+
+class TextFieldRO(forms.CharField):
+
+    widget=forms.widgets.Textarea(attrs={'class':'disabled', 'readonly':'readonly'})
+    def clean(self, value):
+        """
+        Validates that the input matches the regular expression. Returns a
+        Unicode object.
+        """
+        value = super(TextFieldRO, self).clean(value)
+        if value == u'':
+            return value
+        return value
+
+from countryfield import COUNTRIES
+class StateField(forms.ChoiceField):
+
+    def __init__(self, choices= COUNTRIES, required=True, widget=None, label=None,
+                 initial=None, help_text=None, *args, **kwargs):
+        super(forms.ChoiceField, self).__init__(required=required, widget=widget, label=label,
+                                        initial=initial, help_text=help_text, *args, **kwargs)
+        self.choices = choices

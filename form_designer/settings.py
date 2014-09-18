@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.files.storage import get_storage_class
 
 STATIC_URL = os.path.join(getattr(settings, 'STATIC_URL', settings.MEDIA_URL), 'form_designer')
-
+STATIC_ROOT = os.path.join(getattr(settings, 'STATIC_ROOT', 'form_designer'))
 FIELD_CLASSES = getattr(settings, 'FORM_DESIGNER_FIELD_CLASSES', (
     ('django.forms.CharField', _('Text')),
     ('django.forms.EmailField', _('E-mail address')),
@@ -22,8 +22,15 @@ FIELD_CLASSES = getattr(settings, 'FORM_DESIGNER_FIELD_CLASSES', (
     ('django.forms.ModelMultipleChoiceField', _('Model Multiple Choice')),
     ('django.forms.RegexField', _('Regex')),
     ('django.forms.FileField', _('File')),
+    ('form_designer.fields.CharFieldRO', _('Char Read Only')),
+    ('form_designer.fields.TextFieldRO', _('Text Read Only')),
+    ('form_designer.fields.StateField', _('Country')),
     # ('captcha.fields.CaptchaField', _('Captcha')),
 ))
+
+if 'django_dropbox' in settings.INSTALLED_APPS:
+    FIELD_CLASSES = FIELD_CLASSES + ( ('form_designer.fields.DropBoxFLD', _('DropBoxFile')),)
+    #pass
 
 WIDGET_CLASSES = getattr(settings, 'FORM_DESIGNER_WIDGET_CLASSES', (
     ('', _('Default')),
@@ -31,9 +38,11 @@ WIDGET_CLASSES = getattr(settings, 'FORM_DESIGNER_WIDGET_CLASSES', (
     ('django.forms.widgets.PasswordInput', _('Password input')),
     ('django.forms.widgets.HiddenInput', _('Hidden input')),
     ('django.forms.widgets.RadioSelect', _('Radio button')),
+    ('form_designer.forms.RadioSelectCustom', _('Radio Oriz button')),
+    ('django.forms.widgets.CheckboxSelectMultiple', _('Radio Checkbox Multiple')),
 ))
 
-EXPORTER_CLASSES = getattr(settings, 'FORM_DESIGNER_EXPORTER_CLASSES', (
+EXPORTER_CLASSES = getattr(settings, 'FORM_DESIGNER_WIDGET_CLASSES', (
     'form_designer.contrib.exporters.csv_exporter.CsvExporter',
     'form_designer.contrib.exporters.xls_exporter.XlsExporter',
 ))
@@ -45,6 +54,20 @@ FORM_TEMPLATES = getattr(settings, 'FORM_DESIGNER_FORM_TEMPLATES', (
     ('html/formdefinition/forms/as_table_h.html', _('as table (horizontal)')),
     ('html/formdefinition/forms/as_ul.html', _('as unordered list')),
     ('html/formdefinition/forms/custom.html', _('custom implementation')),
+    ('html/formdefinition/forms/custom.html', _('custom implementation 10/10')),
+    ('html/formdefinition/forms/as_bootstrap.html', _('custom bootstrap')),
+    ('html/formdefinition/forms/custom_epo.html', _('custom Epo 11')),
+    ('html/formdefinition/forms/custom_epo_amicale_2013.html', _('custom Epo 2013 split(10)')),
+    ('html/formdefinition/forms/as_bootstrap_slim.html', _('custom slim')),
+    ('html/formdefinition/forms/custom_focus_nestle_2013.html', _('custom Focus 2013 nestle')),
+    ('html/formdefinition/forms/custom_eso_2013.html', _('custom Eso 2013')),
+    ('html/formdefinition/forms/custom_curious_2014.html', _('custom curious 2014')),
+    ('html/formdefinition/forms/custom_spaceexpo_2014.html', _('custom Space Expo 2014')),
+    ('html/formdefinition/forms/custom_fj2014.html', _('custom FocusJ 2014')),
+    ('html/formdefinition/forms/custom_epo_amicale_2014.html', _('custom Epo 2014')),
+    ('html/formdefinition/forms/custom_srt_2014.html', _('custom SRT 2014')),
+    ('html/formdefinition/forms/custom_cern_2014.html', _('custom Cern 2014')),
+    ('html/formdefinition/forms/custom_eso_2014_original.html', _('custom Eso 2014')),
 ))
 
 # Sequence of two-tuples like (('your_app.models.ModelName', 'My Model'), ...) for limiting the models available to ModelChoiceField and ModelMultipleChoiceField.
@@ -67,6 +90,8 @@ CSV_EXPORT_INCLUDE_HEADER = getattr(settings, 'FORM_DESIGNER_CSV_EXPORT_INCLUDE_
 # include form title if exporting logs for more than one form
 CSV_EXPORT_INCLUDE_FORM = getattr(settings, 'FORM_DESIGNER_CSV_EXPORT_INCLUDE_FORM', True)
 
+CSV_EXPORT_FILENAME = getattr(settings, 'FORM_DESIGNER_CSV_EXPORT_FILENAME', 'export.csv')
+
 CSV_EXPORT_ENCODING = getattr(settings, 'FORM_DESIGNER_CSV_EXPORT_ENCODING', 'utf-8')
 
 CSV_EXPORT_NULL_VALUE = getattr(settings, 'FORM_DESIGNER_CSV_EXPORT_NULL_VALUE', '')
@@ -86,8 +111,5 @@ ALLOWED_FILE_TYPES = getattr(settings, 'FORM_DESIGNER_ALLOWED_FILE_TYPES', (
 ))
 
 MAX_UPLOAD_SIZE = getattr(settings, 'MAX_UPLOAD_SIZE', 5242880) # 5M
-MAX_UPLOAD_TOTAL_SIZE = getattr(settings, 'MAX_UPLOAD_TOTAL_SIZE', 10485760) # 10M
 
-# If true, submitted values won't be stored as strings, but serialized to a PickleField,
-# preserving the original type.
-VALUE_PICKLEFIELD = getattr(settings, 'FORM_DESIGNER_VALUE_PICKLEFIELD', True)
+VALUE_PICKLEFIELD = getattr(settings, 'FORM_DESIGNER_VALUE_PICKLEFIELD', False)

@@ -66,6 +66,8 @@ class FormLogExporterBase(ExporterBase):
                 # for field in queryset[0].data:
                 #    header.append(field['label'] if field['label'] else field['key'])
                 for field_name, field in fields.items():
+                    if not hasattr(field,'key'):
+                        field.key = 'None'
                     header.append(field.label if field.label else field.key)
 
                 self.writerow([smart_str(cell, encoding=settings.CSV_EXPORT_ENCODING) for cell in header])
