@@ -2,4 +2,8 @@
 .*
 dist
 MANIFEST
+/venv/
+/mysite/
+manage.py
+project.db
 
