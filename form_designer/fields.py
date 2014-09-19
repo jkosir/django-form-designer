@@ -1,8 +1,8 @@
 from django.db import models
 from django import forms
 
-class ModelNameFormField(forms.CharField):
 
+class ModelNameFormField(forms.CharField):
     @staticmethod
     def get_model_from_string(model_path):
         try:
@@ -23,8 +23,8 @@ class ModelNameFormField(forms.CharField):
             raise forms.ValidationError(self.error_messages['invalid'])
         return value
 
-class ModelNameField(models.CharField):
 
+class ModelNameField(models.CharField):
     @staticmethod
     def get_model_from_string(model_path):
         return ModelNameFormField.get_model_from_string(model_path)
@@ -36,22 +36,23 @@ class ModelNameField(models.CharField):
         defaults.update(kwargs)
         return super(ModelNameField, self).formfield(**defaults)
 
-class TemplateFormField(forms.CharField):
 
+class TemplateFormField(forms.CharField):
     def clean(self, value):
         """
         Validates that the input can be compiled as a template.
         """
         value = super(TemplateFormField, self).clean(value)
         from django.template import Template, TemplateSyntaxError
+
         try:
             Template(value)
         except TemplateSyntaxError, error:
             raise forms.ValidationError(error)
         return value
 
-class TemplateCharField(models.CharField):
 
+class TemplateCharField(models.CharField):
     def formfield(self, **kwargs):
         # This is a fairly standard way to set up some defaults
         # while letting the caller override them.
@@ -59,8 +60,8 @@ class TemplateCharField(models.CharField):
         defaults.update(kwargs)
         return super(TemplateCharField, self).formfield(**defaults)
 
-class TemplateTextField(models.TextField):
 
+class TemplateTextField(models.TextField):
     def formfield(self, **kwargs):
         # This is a fairly standard way to set up some defaults
         # while letting the caller override them.
@@ -68,22 +69,23 @@ class TemplateTextField(models.TextField):
         defaults.update(kwargs)
         return super(TemplateTextField, self).formfield(**defaults)
 
-class RegexpExpressionFormField(forms.CharField):
 
+class RegexpExpressionFormField(forms.CharField):
     def clean(self, value):
         """
         Validates that the input can be compiled as a Regular Expression.
         """
         value = super(RegexpExpressionFormField, self).clean(value)
         import re
+
         try:
             re.compile(value)
         except Exception, error:
             raise forms.ValidationError(error)
         return value
 
-class RegexpExpressionField(models.CharField):
 
+class RegexpExpressionField(models.CharField):
     def formfield(self, **kwargs):
         # This is a fairly standard way to set up some defaults
         # while letting the caller override them.
@@ -91,9 +93,10 @@ class RegexpExpressionField(models.CharField):
         defaults.update(kwargs)
         return super(RegexpExpressionField, self).formfield(**defaults)
 
-class CharFieldRO(forms.CharField):
 
-    widget=forms.TextInput(attrs={'class':'disabled', 'readonly':'readonly'})
+class CharFieldRO(forms.CharField):
+    widget = forms.TextInput(attrs={'class': 'disabled', 'readonly': 'readonly'})
+
     def clean(self, value):
         """
         Validates that the input matches the regular expression. Returns a
@@ -104,9 +107,10 @@ class CharFieldRO(forms.CharField):
             return value
         return value
 
-class TextFieldRO(forms.CharField):
 
-    widget=forms.widgets.Textarea(attrs={'class':'disabled', 'readonly':'readonly'})
+class TextFieldRO(forms.CharField):
+    widget = forms.widgets.Textarea(attrs={'class': 'disabled', 'readonly': 'readonly'})
+
     def clean(self, value):
         """
         Validates that the input matches the regular expression. Returns a
@@ -117,11 +121,13 @@ class TextFieldRO(forms.CharField):
             return value
         return value
 
-from countryfield import COUNTRIES
-class StateField(forms.ChoiceField):
 
-    def __init__(self, choices= COUNTRIES, required=True, widget=None, label=None,
+from countryfield import COUNTRIES
+
+
+class StateField(forms.ChoiceField):
+    def __init__(self, choices=COUNTRIES, required=True, widget=None, label=None,
                  initial=None, help_text=None, *args, **kwargs):
         super(forms.ChoiceField, self).__init__(required=required, widget=widget, label=label,
-                                        initial=initial, help_text=help_text, *args, **kwargs)
+                                                initial=initial, help_text=help_text, *args, **kwargs)
         self.choices = choices

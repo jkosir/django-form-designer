@@ -30,7 +30,7 @@ FIELD_CLASSES = getattr(settings, 'FORM_DESIGNER_FIELD_CLASSES', (
 
 if 'django_dropbox' in settings.INSTALLED_APPS:
     FIELD_CLASSES = FIELD_CLASSES + ( ('form_designer.fields.DropBoxFLD', _('DropBoxFile')),)
-    #pass
+    # pass
 
 WIDGET_CLASSES = getattr(settings, 'FORM_DESIGNER_WIDGET_CLASSES', (
     ('', _('Default')),
@@ -103,13 +103,13 @@ FILE_STORAGE_CLASS = getattr(settings, 'FORM_DESIGNER_FILE_STORAGE_CLASS', get_s
 FILE_STORAGE_DIR = 'form_uploads'
 
 ALLOWED_FILE_TYPES = getattr(settings, 'FORM_DESIGNER_ALLOWED_FILE_TYPES', (
-    'aac', 'ace', 'ai', 'aiff', 'avi', 'bmp', 'dir', 'doc', 'docx', 'dmg', 'eps', 'fla', 'flv', 
-    'gif', 'gz', 'hqx', 'ico', 'indd', 'inx', 'jpg', 'jar', 'jpeg', 'md', 'mov', 
-    'mp3', 'mp4', 'mpc', 'mkv', 'mpg', 'mpeg', 'ogg', 'odg', 'odf', 'odp', 'ods', 'odt', 'otf', 
-    'pdf', 'png', 'pps', 'ppsx', 'ps', 'psd', 'rar', 'rm', 'rtf', 'sit', 'swf', 'tar', 'tga', 
+    'aac', 'ace', 'ai', 'aiff', 'avi', 'bmp', 'dir', 'doc', 'docx', 'dmg', 'eps', 'fla', 'flv',
+    'gif', 'gz', 'hqx', 'ico', 'indd', 'inx', 'jpg', 'jar', 'jpeg', 'md', 'mov',
+    'mp3', 'mp4', 'mpc', 'mkv', 'mpg', 'mpeg', 'ogg', 'odg', 'odf', 'odp', 'ods', 'odt', 'otf',
+    'pdf', 'png', 'pps', 'ppsx', 'ps', 'psd', 'rar', 'rm', 'rtf', 'sit', 'swf', 'tar', 'tga',
     'tif', 'tiff', 'ttf', 'txt', 'wav', 'wma', 'wmv', 'xls', 'xlsx', 'xml', 'zip'
 ))
 
-MAX_UPLOAD_SIZE = getattr(settings, 'MAX_UPLOAD_SIZE', 5242880) # 5M
+MAX_UPLOAD_SIZE = getattr(settings, 'MAX_UPLOAD_SIZE', 5242880)  # 5M
 
 VALUE_PICKLEFIELD = getattr(settings, 'FORM_DESIGNER_VALUE_PICKLEFIELD', False)

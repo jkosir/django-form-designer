@@ -3,7 +3,7 @@ import os
 from django import forms
 from django.forms import widgets
 from django.conf import settings as django_settings
-from django.utils.encoding import force_unicode, StrAndUnicode
+from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 
@@ -14,17 +14,18 @@ from form_designer.utils import get_class
 
 
 class DesignedForm(forms.Form):
-
     def __init__(self, form_definition, initial_data=None, *args, **kwargs):
         super(DesignedForm, self).__init__(*args, **kwargs)
         self.file_fields = []
         for def_field in form_definition.formdefinitionfield_set.all():
             self.add_defined_field(def_field, initial_data)
-        self.fields[form_definition.submit_flag_name] = forms.BooleanField(required=False, initial=1, widget=widgets.HiddenInput)
+        self.fields[form_definition.submit_flag_name] = forms.BooleanField(required=False, initial=1,
+                                                                           widget=widgets.HiddenInput)
 
     def add_defined_field(self, def_field, initial_data=None):
         if initial_data and initial_data.has_key(def_field.name):
-            if not def_field.field_class in ('django.forms.MultipleChoiceField', 'django.forms.ModelMultipleChoiceField'):
+            if not def_field.field_class in (
+            'django.forms.MultipleChoiceField', 'django.forms.ModelMultipleChoiceField'):
                 def_field.initial = initial_data.get(def_field.name)
             else:
                 def_field.initial = initial_data.getlist(def_field.name)
@@ -35,19 +36,21 @@ class DesignedForm(forms.Form):
 
     def clean(self):
         return clean_files(self)
-        
+
 
 class FormDefinitionFieldInlineForm(forms.ModelForm):
     class Meta:
         model = FormDefinitionField
 
     def clean_regex(self):
-        if not self.cleaned_data['regex'] and self.cleaned_data.has_key('field_class') and self.cleaned_data['field_class'] in ('django.forms.RegexField',):
+        if not self.cleaned_data['regex'] and self.cleaned_data.has_key('field_class') and self.cleaned_data[
+            'field_class'] in ('django.forms.RegexField',):
             raise forms.ValidationError(_('This field class requires a regular expression.'))
         return self.cleaned_data['regex']
 
     def clean_choice_model(self):
-        if not self.cleaned_data['choice_model'] and self.cleaned_data.has_key('field_class') and self.cleaned_data['field_class'] in ('django.forms.ModelChoiceField', 'django.forms.ModelMultipleChoiceField'):
+        if not self.cleaned_data['choice_model'] and self.cleaned_data.has_key('field_class') and self.cleaned_data[
+            'field_class'] in ('django.forms.ModelChoiceField', 'django.forms.ModelMultipleChoiceField'):
             raise forms.ValidationError(_('This field class requires a model.'))
         return self.cleaned_data['choice_model']
 
@@ -73,6 +76,7 @@ class FormDefinitionForm(forms.ModelForm):
         js.extend(
             [os.path.join(settings.STATIC_URL, path) for path in plugins])
         return forms.Media(js=js)
+
     media = property(_media)
 
 
@@ -80,10 +84,12 @@ class RadioFieldRendererCustom(widgets.RadioFieldRenderer):
     """
     An object used by RadioSelect to enable customization of radio widgets.
     """
+
     def render(self):
         """Outputs a <ul> for this set of radio fields."""
         return mark_safe(u'<span class="radio">%s</span>\n' % u'\n'.join([u'%s'
-                % force_unicode(w) for w in self]))
+                                                                          % force_unicode(w) for w in self]))
+
 
 class RadioSelectCustom(widgets.RadioSelect):
     renderer = RadioFieldRendererCustom

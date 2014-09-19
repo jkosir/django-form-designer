@@ -5,7 +5,7 @@ from django.db import models
 
 # ISO 3166-1 country names and codes adapted from http://opencountrycodes.appspot.com/python/
 COUNTRIES = (
-    #('IT', _('Italy')),
+    # ('IT', _('Italy')),
     ('AF', _('Afghanistan')),
     ('AX', _('Aland Islands')),
     ('AL', _('Albania')),
@@ -253,8 +253,8 @@ COUNTRIES = (
     ('ZW', _('Zimbabwe')),
 )
 
-class CountryField(models.CharField):
 
+class CountryField(models.CharField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('max_length', 2)
         kwargs.setdefault('choices', COUNTRIES)
@@ -263,4 +263,3 @@ class CountryField(models.CharField):
 
     def get_internal_type(self):
         return "CharField"
-  

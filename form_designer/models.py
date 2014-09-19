@@ -1,9 +1,9 @@
-from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
-from form_designer.utils import get_class
-from form_designer.templatetags.friendly import friendly
-from form_designer import settings
+import re
+import uuid
+import hashlib
 import os
 
+from decimal import Decimal
 from django.db import models
 from django.db.models import Count
 from django.utils.encoding import smart_unicode
@@ -12,12 +12,10 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.utils.datastructures import SortedDict
 
-from decimal import Decimal
-
-import re
-import uuid
-import hashlib
-
+from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
+from form_designer.utils import get_class
+from form_designer.templatetags.friendly import friendly
+from form_designer import settings
 
 if settings.VALUE_PICKLEFIELD:
     from picklefield.fields import PickledObjectField
@@ -33,38 +31,61 @@ class FormValueDict(dict):
 
 class FormDefinition(models.Model):
     name = models.SlugField(_('name'), max_length=255, unique=True)
-    require_hash = models.BooleanField(_('obfuscate URL to this form'), default=False, help_text=_('If enabled, the form can only be reached via a secret URL.'))
+    require_hash = models.BooleanField(_('obfuscate URL to this form'), default=False,
+                                       help_text=_('If enabled, the form can only be reached via a secret URL.'))
     private_hash = models.CharField(editable=False, max_length=40, default='')
     public_hash = models.CharField(editable=False, max_length=40, default='')
     title = models.CharField(_('title'), max_length=255, blank=True, null=True)
     body = models.TextField(_('body'), blank=True, null=True)
-    action = models.URLField(_('target URL'), help_text=_('If you leave this empty, the page where the form resides will be requested, and you can use the mail form and logging features. You can also send data to external sites: For instance, enter "http://www.google.ch/search" to create a search form.'), max_length=255, blank=True, null=True)
-    mail_to = TemplateCharField(_('send form data to e-mail address'), help_text=('Separate several addresses with a comma. Your form fields are available as template context. Example: "admin@domain.com, {{ from_email }}" if you have a field named `from_email`.'), max_length=255, blank=True, null=True)
-    mail_from = TemplateCharField(_('sender address'), max_length=255, help_text=('Your form fields are available as template context. Example: "{{ first_name }} {{ last_name }} <{{ from_email }}>" if you have fields named `first_name`, `last_name`, `from_email`.'), blank=True, null=True)
-    mail_subject = TemplateCharField(_('email subject'), max_length=255, help_text=('Your form fields are available as template context. Example: "Contact form {{ subject }}" if you have a field named `subject`.'), blank=True, null=True)
-    mail_uploaded_files  = models.BooleanField(_('Send uploaded files as email attachments'), default=True)
-    mail_report_files  = models.BooleanField(_('Send xls or csv as email attachments'), default=False)
-    mail_replay    = models.BooleanField(_('Send to replay an email to User with Template'), default=False)
-    replay_mail_to = TemplateCharField(_('Send replay to e-mail address'), help_text=('Separate several addresses with a comma. Your form fields are available as template context. Example: "admin@domain.com, {{ from_email }}" if you have a field named `from_email`.'), max_length=255, blank=True, null=True)
+    action = models.URLField(_('target URL'), help_text=_(
+        'If you leave this empty, the page where the form resides will be requested, and you can use the mail form and logging features. You can also send data to external sites: For instance, enter "http://www.google.ch/search" to create a search form.'),
+                             max_length=255, blank=True, null=True)
+    mail_to = TemplateCharField(_('send form data to e-mail address'), help_text=(
+    'Separate several addresses with a comma. Your form fields are available as template context. Example: "admin@domain.com, {{ from_email }}" if you have a field named `from_email`.'),
+                                max_length=255, blank=True, null=True)
+    mail_from = TemplateCharField(_('sender address'), max_length=255, help_text=(
+    'Your form fields are available as template context. Example: "{{ first_name }} {{ last_name }} <{{ from_email }}>" if you have fields named `first_name`, `last_name`, `from_email`.'),
+                                  blank=True, null=True)
+    mail_subject = TemplateCharField(_('email subject'), max_length=255, help_text=(
+    'Your form fields are available as template context. Example: "Contact form {{ subject }}" if you have a field named `subject`.'),
+                                     blank=True, null=True)
+    mail_uploaded_files = models.BooleanField(_('Send uploaded files as email attachments'), default=True)
+    mail_report_files = models.BooleanField(_('Send xls or csv as email attachments'), default=False)
+    mail_replay = models.BooleanField(_('Send to replay an email to User with Template'), default=False)
+    replay_mail_to = TemplateCharField(_('Send replay to e-mail address'), help_text=(
+    'Separate several addresses with a comma. Your form fields are available as template context. Example: "admin@domain.com, {{ from_email }}" if you have a field named `from_email`.'),
+                                       max_length=255, blank=True, null=True)
     replay_subject = models.CharField(_('Replay Subject'), max_length=255, blank=True, null=True)
-    replay_body    = TemplateTextField(_('Replay Body Messages'), blank=True, null=True)
-    replay_attachments0  = models.FileField(_('Replay Body Attachments 1'), blank=True, null=True, upload_to='attachments')
-    replay_attachments1 = models.FileField(_('Replay Body Attachments 2'), blank=True, null=True, upload_to='attachments')
-    replay_attachments_field = models.CharField(_('Replay choice attacment on field'),max_length=255, blank=True, null=True)
+    replay_body = TemplateTextField(_('Replay Body Messages'), blank=True, null=True)
+    replay_attachments0 = models.FileField(_('Replay Body Attachments 1'), blank=True, null=True,
+                                           upload_to='attachments')
+    replay_attachments1 = models.FileField(_('Replay Body Attachments 2'), blank=True, null=True,
+                                           upload_to='attachments')
+    replay_attachments_field = models.CharField(_('Replay choice attacment on field'), max_length=255, blank=True,
+                                                null=True)
 
-    method = models.CharField(_('method'), max_length=10, default="POST", choices = (('POST', 'POST'), ('GET', 'GET')))
+    method = models.CharField(_('method'), max_length=10, default="POST", choices=(('POST', 'POST'), ('GET', 'GET')))
     success_message = models.CharField(_('success message'), max_length=255, blank=True, null=True)
     error_message = models.CharField(_('error message'), max_length=255, blank=True, null=True)
     submit_label = models.CharField(_('submit button label'), max_length=255, blank=True, null=True)
-    log_data = models.BooleanField(_('log form data'), help_text=_('Logs all form submissions to the database.'), default=True)
-    log_data_to_model = models.BooleanField(_('log form data to model'), help_text=_('Logs all form submissions to the database on Model.'), default=True)
-    model_class_name  = ModelNameField(_('model class name'), max_length=255, blank=True, null=True)
-    save_uploaded_files  = models.BooleanField(_('save uploaded files'), help_text=_('Saves all uploaded files using server storage.'), default=True)
+    log_data = models.BooleanField(_('log form data'), help_text=_('Logs all form submissions to the database.'),
+                                   default=True)
+    log_data_to_model = models.BooleanField(_('log form data to model'),
+                                            help_text=_('Logs all form submissions to the database on Model.'),
+                                            default=True)
+    model_class_name = ModelNameField(_('model class name'), max_length=255, blank=True, null=True)
+    save_uploaded_files = models.BooleanField(_('save uploaded files'),
+                                              help_text=_('Saves all uploaded files using server storage.'),
+                                              default=True)
     success_redirect = models.BooleanField(_('HTTP redirect after successful submission'), default=True)
     success_clear = models.BooleanField(_('clear form after successful submission'), default=True)
-    allow_get_initial = models.BooleanField(_('allow initial values via URL'), help_text=_('If enabled, you can fill in form fields by adding them to the query string.'), default=True)
-    message_template = TemplateTextField(_('message template'), help_text=_('Your form fields are available as template context. Example: "{{ message }}" if you have a field named `message`. To iterate over all fields, use the variable `data` (a list containing a dictionary for each form field, each containing the elements `name`, `label`, `value`).'), blank=True, null=True)
-    form_template_name = models.CharField(_('form template'), max_length=255, choices=settings.FORM_TEMPLATES, blank=True, null=True)
+    allow_get_initial = models.BooleanField(_('allow initial values via URL'), help_text=_(
+        'If enabled, you can fill in form fields by adding them to the query string.'), default=True)
+    message_template = TemplateTextField(_('message template'), help_text=_(
+        'Your form fields are available as template context. Example: "{{ message }}" if you have a field named `message`. To iterate over all fields, use the variable `data` (a list containing a dictionary for each form field, each containing the elements `name`, `label`, `value`).'),
+                                         blank=True, null=True)
+    form_template_name = models.CharField(_('form template'), max_length=255, choices=settings.FORM_TEMPLATES,
+                                          blank=True, null=True)
     display_logged = models.BooleanField(_('display logged submissions with form'), default=False)
 
     class Meta:
@@ -83,7 +104,8 @@ class FormDefinition(models.Model):
         for field in self.formdefinitionfield_set.all():
             field_dict[field.name] = field
         return field_dict
-    #dm
+
+    # dm
     def get_field_dict_include_result(self):
         field_dict = SortedDict()
         for field in self.formdefinitionfield_set.all():
@@ -123,7 +145,8 @@ class FormDefinition(models.Model):
         # TODO: refactor, move to utils
         from django.template.loader import get_template
         from django.template import Context, Template
-        if template and hasattr(template, 'name'): #dm
+
+        if template and hasattr(template, 'name'):  #dm
             t = template
         elif template:
             t = get_template(template)
@@ -137,6 +160,7 @@ class FormDefinition(models.Model):
 
     def count_fields(self):
         return self.formdefinitionfield_set.count()
+
     count_fields.short_description = _('Fields')
 
     def __unicode__(self):
@@ -150,12 +174,12 @@ class FormDefinition(models.Model):
         if user and user.is_authenticated():
             created_by = user
 
-        log_entry = FormLog(form_definition=self, data=form_data,created_by=created_by)
+        log_entry = FormLog(form_definition=self, data=form_data, created_by=created_by)
         log_entry.save()
 
         return log_entry
 
-    def data_to_model_db(self,form,user=None):
+    def data_to_model_db(self, form, user=None):
         model = ModelNameField.get_model_from_string(self.model_class_name)
         data = form.cleaned_data
         data.pop('submit__VideoForm')
@@ -166,6 +190,7 @@ class FormDefinition(models.Model):
     def string_template_replace(self, text, context_dict):
         # TODO: refactor, move to utils
         from django.template import Context, Template, TemplateSyntaxError
+
         try:
             t = Template(text)
             return t.render(Context(context_dict))
@@ -192,9 +217,11 @@ class FormDefinition(models.Model):
             mail_subject = self.title
 
         import logging
-        logging.debug('Mail: '+repr(mail_from)+' --> '+repr(mail_to));
+
+        logging.debug('Mail: ' + repr(mail_from) + ' --> ' + repr(mail_to));
 
         from django.core.mail import EmailMessage
+
         message = EmailMessage(mail_subject, message, mail_from or None, mail_to)
 
         if self.mail_uploaded_files:
@@ -204,7 +231,7 @@ class FormDefinition(models.Model):
         if self.mail_report_files:
             qs = FormLog.objects.all()
             #filter(form_definition = self)
-            qs = qs.filter(form_definition = self)
+            qs = qs.filter(form_definition=self)
             file_path = self.export_xcl(qs)
             message.attach_file(file_path)
 
@@ -221,12 +248,13 @@ class FormDefinition(models.Model):
             for key, email in enumerate(replay_mail_to):
                 replay_mail_to[key] = self.string_template_replace(email, context_dict)
 
-            logging.debug('Mail replay: '+repr(self.mail_replay)+' --> '+repr(replay_mail_to));
+            logging.debug('Mail replay: ' + repr(self.mail_replay) + ' --> ' + repr(replay_mail_to));
 
             from django.template import Template
-            replay_body_message = self.compile_message(form_data, Template(self.replay_body) )
 
-            replay_message = EmailMessage(replay_subject, replay_body_message, mail_from or None, replay_mail_to )
+            replay_body_message = self.compile_message(form_data, Template(self.replay_body))
+
+            replay_message = EmailMessage(replay_subject, replay_body_message, mail_from or None, replay_mail_to)
 
             if not self.replay_attachments_field:
                 if self.replay_attachments0:
@@ -235,7 +263,8 @@ class FormDefinition(models.Model):
                     replay_message.attach_file(self.replay_attachments1.path)
             else:
                 field_choiches = context_dict[self.replay_attachments_field]
-                def_choices_list = self.formdefinitionfield_set.get( name = self.replay_attachments_field ).choice_values.split()
+                def_choices_list = self.formdefinitionfield_set.get(
+                    name=self.replay_attachments_field).choice_values.split()
                 idx = def_choices_list.index(field_choiches)
                 if idx == 1:
                     if self.replay_attachments1:
@@ -246,10 +275,13 @@ class FormDefinition(models.Model):
             replay_message.send(fail_silently=False)
 
 
-    def export_xcl(self,qs):
-        try:  import xlwt
-        except ImportError: xlwt_installed = False
-        else: xlwt_installed = True
+    def export_xcl(self, qs):
+        try:
+            import xlwt
+        except ImportError:
+            xlwt_installed = False
+        else:
+            xlwt_installed = True
         wb = xlwt.Workbook()
         ws = wb.add_sheet(unicode(self._meta.verbose_name_plural))
         distinct_forms = qs.aggregate(Count('form_definition', distinct=True))['form_definition__count']
@@ -270,7 +302,7 @@ class FormDefinition(models.Model):
             for i, f in enumerate(header):
                 try:
                     ws.write(0, i, smart_unicode(f, encoding=settings.CSV_EXPORT_ENCODING))
-                except :
+                except:
                     ws.write(0, i, smart_unicode("Not-Recognized", encoding=settings.CSV_EXPORT_ENCODING))
 
         for i, entry in enumerate(qs):
@@ -284,11 +316,11 @@ class FormDefinition(models.Model):
             for field in entry.data:
                 if field['name'] in fields_in_results:
                     value = friendly(field['value'])
-                    row.append(smart_unicode( value, encoding=settings.CSV_EXPORT_ENCODING))
+                    row.append(smart_unicode(value, encoding=settings.CSV_EXPORT_ENCODING))
             for j, cell in enumerate(row):
-                ws.write(i+1, j, smart_unicode(cell))
+                ws.write(i + 1, j, smart_unicode(cell))
 
-        file_path = os.path.join(settings.STATIC_ROOT,'report.xls' )
+        file_path = os.path.join(settings.STATIC_ROOT, 'report.xls')
         wb.save(file_path)
         return file_path
 
@@ -303,7 +335,6 @@ class FormDefinition(models.Model):
 
 
 class FormDefinitionField(models.Model):
-
     form_definition = models.ForeignKey(FormDefinition)
     field_class = models.CharField(_('field class'), choices=settings.FIELD_CLASSES, max_length=32)
     position = models.IntegerField(_('position'), blank=True, null=True)
@@ -311,8 +342,11 @@ class FormDefinitionField(models.Model):
     name = models.SlugField(_('name'), max_length=255)
     label = models.CharField(_('label'), max_length=255, blank=True, null=True)
     required = models.BooleanField(_('required'), default=True)
-    include_result = models.BooleanField(_('include in result'), help_text=('If this is disabled, the field value will not be included in logs and e-mails generated from form data.'), default=True)
-    widget = models.CharField(_('widget'), default='', choices=settings.WIDGET_CLASSES, max_length=255, blank=True, null=True)
+    include_result = models.BooleanField(_('include in result'), help_text=(
+    'If this is disabled, the field value will not be included in logs and e-mails generated from form data.'),
+                                         default=True)
+    widget = models.CharField(_('widget'), default='', choices=settings.WIDGET_CLASSES, max_length=255, blank=True,
+                              null=True)
     initial = models.TextField(_('initial value'), blank=True, null=True)
     help_text = models.CharField(_('help text'), max_length=255, blank=True, null=True)
 
@@ -329,11 +363,14 @@ class FormDefinitionField(models.Model):
     regex = RegexpExpressionField(_('regular Expression'), max_length=255, blank=True, null=True)
 
     choice_model_choices = settings.CHOICE_MODEL_CHOICES
-    choice_model = ModelNameField(_('data model'), max_length=255, blank=True, null=True, choices=choice_model_choices, help_text=('your_app.models.ModelName' if not choice_model_choices else None))
+    choice_model = ModelNameField(_('data model'), max_length=255, blank=True, null=True, choices=choice_model_choices,
+                                  help_text=('your_app.models.ModelName' if not choice_model_choices else None))
     choice_model_empty_label = models.CharField(_('empty label'), max_length=255, blank=True, null=True)
 
-    #added by dm
-    localized = models.BooleanField(_('Localized Format'), help_text=('If this is True, the field value get settings from Localization.'), default=False)
+    # added by dm
+    localized = models.BooleanField(_('Localized Format'),
+                                    help_text=('If this is True, the field value get settings from Localization.'),
+                                    default=False)
     #file_upload_suffix = models.CharField(_('File Suffix'), default='', max_length=255, blank=True, null=True)
 
     objects = models.Manager()
@@ -348,7 +385,8 @@ class FormDefinitionField(models.Model):
             self.position = 0
         super(FormDefinitionField, self).save(*args, **kwargs)
 
-    def ____init__(self, field_class=None, name=None, required=None, widget=None, label=None, initial=None, help_text=None, *args, **kwargs):
+    def ____init__(self, field_class=None, name=None, required=None, widget=None, label=None, initial=None,
+                   help_text=None, *args, **kwargs):
         super(FormDefinitionField, self).__init__(*args, **kwargs)
         self.name = name
         self.field_class = field_class
@@ -365,10 +403,10 @@ class FormDefinitionField(models.Model):
             'initial': self.initial if self.initial else None,
             'help_text': self.help_text,
         }
-#        if self.localized:
-#            args.update({
-#                'localize': True,
-#            })
+        #        if self.localized:
+        #            args.update({
+        #                'localize': True,
+        #            })
         if self.field_class in ('django.forms.CharField', 'django.forms.EmailField', 'django.forms.RegexField'):
             args.update({
                 'max_length': self.max_length,
@@ -436,7 +474,7 @@ class FormLog(models.Model):
     form_definition = models.ForeignKey(FormDefinition, related_name='logs')
     created = models.DateTimeField(_('Created'), auto_now=True)
     created_by = models.ForeignKey(User, null=True, blank=True)
-    #dm
+    # dm
     #model_create = models.BooleanField(default=False)
 
     _data = None
@@ -449,8 +487,8 @@ class FormLog(models.Model):
         ordering = ['-created']
 
     def __unicode__(self):
-        return "%s (%s)" % (self.form_definition.title or  \
-            self.form_definition.name, self.created)
+        return "%s (%s)" % (self.form_definition.title or \
+                            self.form_definition.name, self.created)
 
     def get_data(self):
         if self._data:
@@ -470,7 +508,7 @@ class FormLog(models.Model):
                 label = None
 
             value_dict = FormValueDict(item.field_name, item.value,
-                label)
+                                       label)
 
             if item.field_name in fields:
                 values_with_header[item.field_name] = value_dict
@@ -527,6 +565,7 @@ class FormValue(models.Model):
 
 if 'south' in django_settings.INSTALLED_APPS:
     from south.modelsinspector import add_introspection_rules
+
     add_introspection_rules([], ["^form_designer\.fields\..*"])
 
 

@@ -1,8 +1,3 @@
-from form_designer import settings as app_settings
-from form_designer.forms import DesignedForm
-from form_designer.models import FormDefinition
-from form_designer.uploads import handle_uploaded_files
-
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render_to_response
@@ -10,11 +5,15 @@ from django.template import RequestContext
 from django.core.context_processors import csrf
 from django.utils.translation import ugettext as _
 
+from form_designer import settings as app_settings
+from form_designer.forms import DesignedForm
+from form_designer.models import FormDefinition
+from form_designer.uploads import handle_uploaded_files
+
 
 def process_form(request, form_definition, extra_context={},
-        disable_redirection=False, suppress_messages=False,
-        force_log_data=False):
-
+                 disable_redirection=False, suppress_messages=False,
+                 force_log_data=False):
     context = extra_context
     success_message = form_definition.success_message or _('Thank you, the data was submitted successfully.')
     error_message = form_definition.error_message or _('The data could not be submitted, please try again.')
@@ -38,16 +37,16 @@ def process_form(request, form_definition, extra_context={},
             if not suppress_messages:
                 messages.success(request, success_message)
             form_success = True
-            if form_definition.log_data or force_log_data:# logs
+            if form_definition.log_data or force_log_data:  # logs
                 context["form_log"] = form_definition.log(form, request.user)
             if form_definition.log_data_to_model:
-                form_definition.data_to_model_db(form,request.user)
+                form_definition.data_to_model_db(form, request.user)
             if form_definition.mail_to:
                 form_definition.send_mail(form, files)
             if form_definition.success_redirect and not disable_redirection:
                 return HttpResponseRedirect(form_definition.action or '?')
             if form_definition.success_clear:
-                form = DesignedForm(form_definition) # clear form
+                form = DesignedForm(form_definition)  # clear form
         else:
             form_error = True
             if not suppress_messages:
@@ -72,6 +71,7 @@ def process_form(request, form_definition, extra_context={},
 
     return context
 
+
 def _form_detail_view(request, form_definition):
     result = process_form(request, form_definition)
     if isinstance(result, HttpResponseRedirect):
@@ -80,11 +80,13 @@ def _form_detail_view(request, form_definition):
         'form_template': form_definition.form_template_name or app_settings.DEFAULT_FORM_TEMPLATE
     })
     return render_to_response('html/formdefinition/detail.html', result,
-        context_instance=RequestContext(request))
+                              context_instance=RequestContext(request))
+
 
 def detail(request, object_name):
     form_definition = get_object_or_404(FormDefinition, name=object_name, require_hash=False)
     return _form_detail_view(request, form_definition)
+
 
 def detail_by_hash(request, public_hash):
     form_definition = get_object_or_404(FormDefinition, public_hash=public_hash)
