@@ -70,10 +70,11 @@ def handle_uploaded_files(form_definition, form):
             if form_definition.filename_fields:
                 for name in form_definition.filename_fields.splitlines():
                     try:
-                        form_data.append(getattr(form_definition, name))
+                        form_data.append(form.cleaned_data[name])
                     except AttributeError:
                         logger.error('No such field %s.' % name)
-            root = '_'.join([form_data, root])
+            root = '_'.join(form_data + [root])
+            print root
             filename = storage.get_available_name(
                 os.path.join(app_settings.FILE_STORAGE_DIR,
                              form_definition.name,
